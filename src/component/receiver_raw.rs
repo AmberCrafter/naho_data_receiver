@@ -7,6 +7,8 @@ use std::{
     thread::{self, JoinHandle},
 };
 
+use chrono::NaiveDateTime;
+
 pub fn setup_rawdata_recorder(
     receiver: Receiver<String>,
     root: &str,
@@ -17,7 +19,20 @@ pub fn setup_rawdata_recorder(
     let handler = thread::spawn(move || {
         loop {
             while let Ok(msg) = receiver.recv() {
-                let filepath = Path::new(&root).join("data.txt");
+                let mut words = msg.split(',');
+
+                let Some(timestr) = words.nth(3) else {
+                    log::error!("Invalid: {msg}");
+                    continue;
+                };
+
+                let Ok(time) = NaiveDateTime::parse_from_str(timestr, "%Y%m%d%H%M") else {
+                    log::error!("Invalid: {msg}");
+                    continue;
+                };
+
+                let filename = format!("CWB_{}.txt", time.format("%Y%m%d"));
+                let filepath = Path::new(&root).join(filename);
                 let mut file = File::options()
                     .create(true)
                     .append(true)
