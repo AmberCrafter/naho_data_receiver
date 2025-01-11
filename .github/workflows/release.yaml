@@ -111,7 +111,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          # upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ github.event.release.upload_url }}
           asset_path: artifacts/ubuntu/naho_data_receiver
           asset_name: naho_data_receiver-linux-x86_64
           asset_content_type: application/octet-stream
