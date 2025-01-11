@@ -95,6 +95,7 @@ appenders:
 root:
   level: warn
   appenders:
+    - stdout
     - error
 
 loggers:

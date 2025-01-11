@@ -11,6 +11,7 @@ pub struct SerialPortConfig {
 #[derive(Debug, Deserialize)]
 pub struct DatabaseConfig {
     pub rawdata: String,
+    pub sqlite3: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -21,23 +22,8 @@ pub struct GlobalConfig {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct DataTypeConfig {
-    pub rust: String,
-    pub sqlite: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct DataConfig {
-    pub name: String,
-    pub sqlite_name: String,
-    pub datatype: DataTypeConfig,
-    pub regexp: String,
-}
-
-#[derive(Debug, Deserialize)]
 pub struct SystemConfig {
     pub global: GlobalConfig,
-    pub data: Vec<DataConfig>,
 }
 
 impl SystemConfig {

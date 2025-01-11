@@ -37,3 +37,6 @@
  - sqlite data
  - database uploader
 
+
+# TODO
+1. Rework receiver register method

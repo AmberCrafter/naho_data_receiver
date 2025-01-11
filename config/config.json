@@ -6,27 +6,8 @@
             "baudrate": 9600
         },
         "database": {
-            "rawdata": "data/raw"
+            "rawdata": "data/raw",
+            "sqlite3": "data/sqlite3"
         }
-    },
-    "data": [
-        {
-            "name": "Datetime",
-            "sqlite_name": "datetime",
-            "datatype": {
-                "rust": "String",
-                "sqlite": "text"
-            },
-            "regexp": "[0-9]{4}-[0-9]{1,2}-[0-9]{1,2} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}"
-        },
-        {
-            "name": "Temperature",
-            "sqlite_name": "temperature",
-            "datatype": {
-                "rust": "f32",
-                "sqlite": "float"
-            },
-            "regexp": "[0-9]+.[0-9]?"
-        }
-    ]
+    }
 }
