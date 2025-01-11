@@ -52,12 +52,19 @@ jobs:
       - name: Build
         run: cargo build --release
 
+      - name: pack
+        run: |
+          mkdir naho_data_receiver
+          cp target/release/naho_data_receiver naho_data_receiver
+          cp -r config naho_data_receiver
+          tar -cvf naho_data_receiver.tar naho_data_receiver
+
       - name: Upload arifact
         if: matrix.platform == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu-latest-naho_data_receiver
-          path: target/release/naho_data_receiver
+          path: naho_data_receiver.tar
 
       # - name: Rust cache
       #   uses: swatinem/rust-cache@v2
@@ -113,7 +120,7 @@ jobs:
         with:
           # upload_url: ${{ steps.create_release.outputs.upload_url }}
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: artifacts/ubuntu/naho_data_receiver
-          asset_name: naho_data_receiver-linux-x86_64
+          asset_path: artifacts/ubuntu/naho_data_receiver.tar
+          asset_name: naho_data_receiver-linux-x86_64.tar
           asset_content_type: application/octet-stream
 
