@@ -1,0 +1,32 @@
+{
+    "global": {
+        "log4rs_cfg": "config/log4rs.yml",
+        "serial_port": {
+            "path": "/dev/ttyUSB0",
+            "baudrate": 9600
+        },
+        "database": {
+            "rawdata": "data/raw"
+        }
+    },
+    "data": [
+        {
+            "name": "Datetime",
+            "sqlite_name": "datetime",
+            "datatype": {
+                "rust": "String",
+                "sqlite": "text"
+            },
+            "regexp": "[0-9]{4}-[0-9]{1,2}-[0-9]{1,2} [0-9]{1,2}:[0-9]{1,2}:[0-9]{1,2}"
+        },
+        {
+            "name": "Temperature",
+            "sqlite_name": "temperature",
+            "datatype": {
+                "rust": "f32",
+                "sqlite": "float"
+            },
+            "regexp": "[0-9]+.[0-9]?"
+        }
+    ]
+}

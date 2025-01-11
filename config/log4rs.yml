@@ -1,0 +1,124 @@
+# Scan this file for changes every 30 seconds
+refresh_rate: 30 seconds
+
+appenders:
+  stdout:
+    kind: console
+    encoder:
+      pattern: "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} [{l}] {f}:{L} - {m}{n}"
+
+  info:
+    kind: rolling_file
+    path: "log/info.log"
+    encoder:
+      pattern: "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} [{l}] {f}:{L} - {m}{n}"
+    policy:
+      kind: compound
+      trigger:
+        kind: size
+        limit: 1mb
+      # trigger:
+      #   kind: time
+      #   interval: 10 seconds
+      #   modulate: false
+      #   max_random_delay: 0
+      roller:
+        kind: fixed_window
+        base: 1
+        count: 5
+        pattern: "log/info.{}.log"
+
+  system:
+    kind: rolling_file
+    path: "log/system.log"
+    encoder:
+      pattern: "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} [{l}] {f}:{L} - {m}{n}"
+    policy:
+      kind: compound
+      trigger:
+        kind: size
+        limit: 10mb
+      # trigger:
+      #   kind: time
+      #   interval: 10 seconds
+      #   modulate: false
+      #   max_random_delay: 0
+      roller:
+        kind: fixed_window
+        base: 1
+        count: 10
+        pattern: "log/system.{}.log"
+
+  error:
+    kind: rolling_file
+    path: "log/error.log"
+    encoder:
+      pattern: "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} [{l}] {f}:{L} - {m}{n}"
+    policy:
+      kind: compound
+      trigger:
+        kind: size
+        limit: 10mb
+      # trigger:
+      #   kind: time
+      #   interval: 10 seconds
+      #   modulate: false
+      #   max_random_delay: 0
+      roller:
+        kind: fixed_window
+        base: 1
+        count: 10
+        pattern: "log/error.{}.log"
+
+  serialport:
+    kind: rolling_file
+    path: "log/serialport.log"
+    encoder:
+      pattern: "{d(%Y-%m-%d %H:%M:%S %Z)(utc)} [{l}] {f}:{L} - {m}{n}"
+    policy:
+      kind: compound
+      trigger:
+        kind: size
+        limit: 1mb
+      # trigger:
+      #   kind: time
+      #   interval: 10 seconds
+      #   modulate: false
+      #   max_random_delay: 0
+      roller:
+        kind: fixed_window
+        base: 1
+        count: 5
+        pattern: "log/serialport.{}.log"
+
+# Set the default logging level to "warn" and attach the "stdout" appender to the root
+root:
+  level: info
+  appenders:
+    - stdout
+    - info
+
+loggers:
+  system:
+    level: info
+    appenders:
+      - system
+
+  error:
+    level: warn
+    appenders:
+      - error
+
+  serialport:
+    level: info
+    appenders:
+      - serialport
+
+#   # Route log events sent to the "app::requests" logger to the "requests" appender,
+#   # and *not* the normal appenders installed at the root
+#   app::requests:
+#     level: info
+#     appenders:
+#       - requests
+#     additive: false
+
