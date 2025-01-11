@@ -9,7 +9,7 @@ fn main() {
     let config = SystemConfig::load("config/config.json").expect("load config failed");
     log4rs::init_file(&config.global.log4rs_cfg, Default::default()).unwrap();
 
-    log::info!(target: "system", "{config:#?}");
+    log::info!(target: "configuation", "{config:?}");
 
     let (uart_tx, uart_rx) = mpsc::channel();
     let (rc_raw_tx, rc_raw_rx) = mpsc::channel();
