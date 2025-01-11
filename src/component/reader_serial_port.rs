@@ -66,7 +66,7 @@ pub fn setup_serial_port_cwb(
                     let (_, rawmsg) = buffer.split_at_mut(stx_idx);
 
                     let msg = String::from_utf8_lossy(rawmsg).to_string();
-                    log::info!("[{}] {:?}", num, msg);
+                    log::info!(target: "console", "[{}] {:?}", num, msg);
                     if let Err(e) = sender.send(msg) {
                         log::error!("{e}");
                     }

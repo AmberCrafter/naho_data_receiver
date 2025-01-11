@@ -93,21 +93,25 @@ appenders:
 
 # Set the default logging level to "warn" and attach the "stdout" appender to the root
 root:
-  level: info
+  level: error
   appenders:
-    - stdout
-    - info
+    - error
 
 loggers:
+  console:
+    level: info
+    appenders:
+      - stdout
+
   system:
     level: info
     appenders:
       - system
 
-  error:
-    level: warn
+  info:
+    level: info
     appenders:
-      - error
+      - info
 
   serialport:
     level: info

@@ -1,35 +1,33 @@
 mod component;
 mod config;
 
-use component::{parser_cwb::CWBMinData, reader_serial_port::setup_serial_port_cwb, receiver_raw::setup_rawdata_recorder};
+use component::{reader_serial_port::setup_serial_port_cwb, receiver_raw::setup_rawdata_recorder};
 use config::SystemConfig;
-use log::{debug, error, info, trace, warn};
-use std::{
-    io::{self, BufRead, BufReader},
-    sync::mpsc,
-    thread::sleep,
-    time::Duration,
-};
+use std::{process::exit, sync::mpsc};
 
 fn main() {
-    println!("Hello, world!");
     let config = SystemConfig::load("config/config.json").expect("load config failed");
     log4rs::init_file(&config.global.log4rs_cfg, Default::default()).unwrap();
 
-    println!("{config:#?}");
+    log::info!(target: "system", "{config:#?}");
 
     let (uart_tx, uart_rx) = mpsc::channel();
     let (rc_raw_tx, rc_raw_rx) = mpsc::channel();
 
-    let _uart_handler = setup_serial_port_cwb(
+    let Ok(_uart_handler) = setup_serial_port_cwb(
         &config.global.serial_port.path,
         config.global.serial_port.baudrate,
         uart_tx,
-    )
-    .expect("Setup serial port failed");
+    ) else {
+        log::error!("Setup serial port failed");
+        exit(exitcode::UNAVAILABLE);
+    };
 
-    let _rc_raw_handler = setup_rawdata_recorder(rc_raw_rx, &config.global.database.rawdata)
-        .expect("Setup raw data recorder failed");
+    let Ok(_rc_raw_handler) = setup_rawdata_recorder(rc_raw_rx, &config.global.database.rawdata)
+    else {
+        log::error!("Setup raw data recorder failed");
+        exit(exitcode::UNAVAILABLE);
+    };
 
     // dispatcher
     while let Ok(msg) = uart_rx.recv() {
