@@ -53,7 +53,7 @@ jobs:
 
       - name: Upload arifact
         if: matrix.platform == 'ubuntu-latest'
-        uses: action/upload-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
           name: ubuntu-latest-naho_data_receiver
           path: target/release/naho_data_receiver
