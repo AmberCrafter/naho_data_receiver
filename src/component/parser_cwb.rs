@@ -722,7 +722,7 @@ pub struct CWBSoilHourData {
 impl CWBSoilHourData {
     pub fn parse_from_str(data: &str) -> Result<Self, Box<dyn Error + 'static>> {
         let mut words = data.split(',');
-        if words.nth(2) != Some("SM") {
+        if words.nth(2) != Some("SH") {
             return Err(String::from("Invalid").into());
         }
 
@@ -878,7 +878,7 @@ pub struct CWBSoilDayData {
 impl CWBSoilDayData {
     pub fn parse_from_str(data: &str) -> Result<Self, Box<dyn Error + 'static>> {
         let mut words = data.split(',');
-        if words.nth(2) != Some("SM") {
+        if words.nth(2) != Some("SD") {
             return Err(String::from("Invalid").into());
         }
 
