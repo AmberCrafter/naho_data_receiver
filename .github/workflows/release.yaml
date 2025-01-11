@@ -16,7 +16,9 @@ jobs:
           #   args: '--target aarch64-apple-darwin'
           # - platform: 'macos-latest' # for Intel based macs.
           #   args: '--target x86_64-apple-darwin'
-          - platform: 'ubuntu-latest' # for Tauri v1 you could replace this with ubuntu-20.04.
+          - platform: 'ubuntu-22.04'
+            args: ''
+          - platform: 'ubuntu-24.04'
             args: ''
           # - platform: 'windows-latest'
           #   args: ''
@@ -26,7 +28,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-latest' # This must match the platform value defined above.
+        if: matrix.platform == 'ubuntu-22.04' | matrix.platform == 'ubuntu-24.04' # This must match the platform value defined above.
         run: |
           sudo apt-get update
           sudo apt-get install -y libudev-dev
@@ -60,10 +62,9 @@ jobs:
           tar -cvf naho_data_receiver.tar naho_data_receiver
 
       - name: Upload arifact
-        if: matrix.platform == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: ubuntu-latest-naho_data_receiver
+          name: ${{ matrix.platform }}-naho_data_receiver
           path: naho_data_receiver.tar
 
       # - name: Rust cache
@@ -95,8 +96,8 @@ jobs:
       - name: download aritifact
         uses: actions/download-artifact@v4
         with:
-          name: ubuntu-latest-naho_data_receiver
-          path: artifacts/ubuntu
+          name: ${{ matrix.platform }}-naho_data_receiver
+          path: artifacts/${{ matrix.platform }}
 
       # - name: create release
       #   id: create_release
@@ -120,7 +121,7 @@ jobs:
         with:
           # upload_url: ${{ steps.create_release.outputs.upload_url }}
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: artifacts/ubuntu/naho_data_receiver.tar
-          asset_name: naho_data_receiver-linux-x86_64.tar
+          asset_path: artifacts/${{ matrix.platform }}/naho_data_receiver.tar
+          asset_name: naho_data_receiver-linux-x86_64-${{ matrix.platform }}.tar
           asset_content_type: application/octet-stream
 
