@@ -91,20 +91,20 @@ jobs:
           name: ubuntu-latest-naho_data_receiver
           path: artifacts/ubuntu
 
-      - name: create release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }} # 使用推送的标签名
-          release_name: Release ${{ github.ref }} # 使用推送的标签名作为发布名称
-          body: |
-            Changes in this Release
-            - Beta version
-            - In developing...
-          draft: false # 是否为草稿
-          prerelease: false # 是否为预发布
+      # - name: create release
+      #   id: create_release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: ${{ github.ref }}
+      #     release_name: Release ${{ github.ref }}
+      #     body: |
+      #       Changes in this Release
+      #       - Beta version
+      #       - In developing...
+      #     draft: false
+      #     prerelease: false
 
       - name: Upload artifact
         uses: actions/upload-release-asset@v1
