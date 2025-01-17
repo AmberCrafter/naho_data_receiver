@@ -79,7 +79,7 @@ pub fn setup_sqlite3_recorder(
 
     let handler = thread::spawn(move || {
         let cwb_codec_config =
-            CWBCodecConfig::load("config/config.json.ignore").expect("load config failed");
+            CWBCodecConfig::load("config/config.json").expect("load config failed");
         log::info!(target: "configuation", "{cwb_codec_config:?}");
         loop {
             while let Ok(msg) = receiver.recv() {
