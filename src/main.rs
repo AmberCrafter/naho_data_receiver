@@ -6,9 +6,9 @@ use config::SystemConfig;
 use std::{process::exit, sync::mpsc};
 
 fn main() {
-    let config = SystemConfig::load("config/config.json").expect("load config failed");
+    let config = SystemConfig::load("config/config.json.ignore").expect("load config failed");
     log4rs::init_file(&config.global.log4rs_cfg, Default::default()).unwrap();
-
+    
     log::info!(target: "configuation", "{config:?}");
 
     let (uart_tx, uart_rx) = mpsc::channel();

@@ -6,25 +6,68 @@ use std::{
     thread::{self, JoinHandle},
 };
 
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, NaiveTime};
 
-const TABLE_NAME: &str = "data";
-const TABLE_INFO: &str = "
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    datetime TEXT,
-    dkind TEXT,
-    value TEXT
-";
+use crate::component::parser_cwb::CWBCodecConfig;
 
-fn create_db<P>(path: P) -> Result<(), Box<dyn Error + 'static>>
+use super::parser_cwb::CWBDataConfig;
+
+fn create_db<P>(path: P, config: &CWBCodecConfig) -> Result<(), Box<dyn Error + 'static>>
 where
     P: AsRef<Path>,
 {
-    let statement = format!("create table if not exists {TABLE_NAME} ({TABLE_INFO});");
     let connection = sqlite::open(path)?;
-    connection.execute(statement)?;
+    for mem in config.codec.iter() {
+        for dkind in mem.dkind.iter() {
+            if let Some(statement) = config.gen_sqlite3_create_table_cmd(dkind, &mem.name) {
+                connection.execute(statement)?;
+            }
+        }
+    }
 
     Ok(())
+}
+
+pub fn parse_rawdata(rawdata: &str, config: &CWBDataConfig) -> Option<String> {
+    let mut buf = Vec::new();
+    let mut words = rawdata.split(',');
+
+    // stx
+    if words.next() != Some("\u{2}") {
+        return None;
+    }
+
+    for dtype in config.formation.iter() {
+        let Some(subdata) = words.next() else {
+            log::error!("System error!");
+            return None;
+        };
+
+        match dtype.rust.dtype.as_str() {
+            "NaiveDateTime" => {
+                let Ok(temp) = NaiveDateTime::parse_from_str(subdata, "%Y%m%d%H%M") else {
+                    log::error!("Invalid data!");
+                    return None;
+                };
+                buf.push(temp.format("'%Y-%m-%d %H:%M:%S'").to_string());
+            }
+            "NaiveTime" => {
+                let Ok(temp) = NaiveTime::parse_from_str(subdata, "%H%M") else {
+                    log::error!("Invalid data!");
+                    return None;
+                };
+                buf.push(temp.format("'%H:%M:%S'").to_string());
+            }
+            "String" => buf.push(format!("'{}'", subdata)),
+            _ => buf.push(subdata.to_string()),
+        }
+    }
+
+    // etx
+    if words.next() != Some("\u{3}") {
+        return None;
+    }
+    Some(buf.join(","))
 }
 
 pub fn setup_sqlite3_recorder(
@@ -35,6 +78,9 @@ pub fn setup_sqlite3_recorder(
     let root = root.to_string();
 
     let handler = thread::spawn(move || {
+        let cwb_codec_config =
+            CWBCodecConfig::load("config/config.json.ignore").expect("load config failed");
+        log::info!(target: "configuation", "{cwb_codec_config:?}");
         loop {
             while let Ok(msg) = receiver.recv() {
                 let mut words = msg.split(',');
@@ -43,6 +89,18 @@ pub fn setup_sqlite3_recorder(
                     log::error!("Invalid: {msg}");
                     continue;
                 };
+
+                let Some(dconfig) = cwb_codec_config.get_data_config(dkind) else {
+                    log::error!("Invalid: {msg}");
+                    continue;
+                };
+
+                let columnname = dconfig
+                    .formation
+                    .iter()
+                    .map(|mem| mem.sqlite3.name.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",");
 
                 let Some(timestr) = words.next() else {
                     log::error!("Invalid: {msg}");
@@ -54,11 +112,16 @@ pub fn setup_sqlite3_recorder(
                     continue;
                 };
 
+                let Some(data_str) = parse_rawdata(&msg, dconfig) else {
+                    log::error!("Invalid: {msg}");
+                    continue;
+                };
+
                 let filename = format!("CWB_{}.sql", time.format("%Y%m%d"));
                 let filepath = Path::new(&root).join(filename);
 
                 if !filepath.exists() {
-                    match create_db(&filepath) {
+                    match create_db(&filepath, &cwb_codec_config) {
                         Ok(_) => {}
                         Err(e) => {
                             log::error!("Create database failed: {e} - {filepath:?} - {msg}");
@@ -68,12 +131,17 @@ pub fn setup_sqlite3_recorder(
                 }
 
                 if let Ok(connection) = sqlite::open(filepath) {
-                    let statement = format!(
-                        "INSERT into {TABLE_NAME} (datetime, dkind, value) values ('{}', '{}', '{}');",
-                        time.format("%Y-%m-%d %H:%M:%S"),
-                        dkind,
-                        msg
-                    );
+                    let statement = if dconfig.raw_save == Some(true) {
+                        format!(
+                            "INSERT into {} ({},rawdata) values ({},'{}');",
+                            &dconfig.name, columnname, data_str, msg.clone()
+                        )
+                    } else {
+                        format!(
+                            "INSERT into {} ({}) values ({});",
+                            &dconfig.name, columnname, data_str
+                        )
+                    };
                     match connection.execute(&statement) {
                         Ok(_) => {}
                         Err(e) => {

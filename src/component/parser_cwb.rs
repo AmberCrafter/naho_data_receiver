@@ -1,6 +1,7 @@
-use std::{error::Error, str::Split};
+use std::{error::Error, fs::File, io::BufReader, str::Split};
 
 use chrono::{NaiveDateTime, NaiveTime};
+use serde::Deserialize;
 
 type INTEGER = i64;
 type FLOAT = f64;
@@ -964,6 +965,97 @@ impl CWBSoilDayData {
     }
 }
 
+
+#[derive(Debug, Deserialize)]
+pub struct CWBDataTypeSpec {
+    pub name: String,
+    pub description: String,
+    pub dtype: String,
+    pub unit: Option<String>,
+    pub float_number: Option<INTEGER>
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CWBDataTypeRust {
+    pub name: String,
+    pub dtype: String,
+    pub unit: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CWBDataTypeSqlite3 {
+    pub name: String,
+    pub dtype: String,
+    pub unit: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CWBDataType {
+    pub spec: CWBDataTypeSpec,
+    pub rust: CWBDataTypeRust,
+    pub sqlite3: CWBDataTypeSqlite3,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CWBDataConfig {
+    pub name: String,
+    pub dkind: Vec<String>,
+    pub raw_save: Option<bool>,
+    pub formation: Vec<CWBDataType>
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CWBCodecConfig {
+    pub codec: Vec<CWBDataConfig>
+}
+
+impl CWBCodecConfig {
+    pub fn load(path: &str) -> Result<Self, Box<dyn Error + 'static>> {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        let config: CWBCodecConfig = serde_json::from_reader(reader)?;
+
+        Ok(config)
+    }
+
+    pub fn gen_sqlite3_create_table_cmd(&self, dkind: &str, tablename: &str) -> Option<String> {
+        let mut find = false;
+        
+        
+        let mut tableinfo = String::new();
+        tableinfo.push_str("id INTEGER PRIMARY KEY AUTOINCREMENT");
+        
+        for mem in self.codec.iter() {
+            if mem.dkind.iter().find(|&v| v.as_str()==dkind).is_some() {
+                find = true;
+                for formation in mem.formation.iter() {
+                    tableinfo.push_str(&format!(", {name} {dtype}", name = formation.sqlite3.name, dtype = formation.sqlite3.dtype));
+                }
+                
+                if Some(true) == mem.raw_save {
+                    tableinfo.push_str(", rawdata TEXT");
+                }
+                break;
+            }
+        }
+        
+        if find {
+            Some(format!("CREATE TABLE IF NOT EXISTS {tablename} ({tableinfo});", tablename = tablename, tableinfo = tableinfo))
+        } else {
+            None
+        }
+    }
+
+    pub fn get_data_config(&self, dkind: &str) -> Option<&CWBDataConfig> {
+        for mem in self.codec.iter() {
+            if mem.dkind.iter().find(|&c_dkind| c_dkind.as_str()==dkind).is_some() {
+                return Some(mem)
+            }
+        }
+        None
+    }
+}
+
 #[cfg(test)]
 mod test {
     use chrono::NaiveDateTime;
@@ -976,5 +1068,21 @@ mod test {
             NaiveDateTime::parse_from_str(timestr, "%Y-%m-%d %H:%M:%S").expect("System error");
 
         println!("{:?}", time);
+    }
+
+    #[test]
+    fn test_read_config() {
+        let path = "config.json.ignore";
+        let config = CWBCodecConfig::load(path).unwrap();
+        println!("{:?}", config);
+    }
+    
+    #[test]
+    fn test_gen_sqlite_create_table_cmd() {
+        let path = "config.json.ignore";
+        let config = CWBCodecConfig::load(path).unwrap();
+        
+        let query = config.gen_sqlite3_create_table_cmd("MN", "hello");
+        println!("{query:?}");
     }
 }
