@@ -43,22 +43,22 @@ pub fn parse_rawdata(rawdata: &str, config: &CWBDataConfig) -> Option<String> {
             return None;
         };
 
-        match dtype.rust.dtype.as_str() {
-            "NaiveDateTime" => {
+        match (dtype.sqlite3.dtype.as_str(), dtype.sqlite3.unit.as_deref()) {
+            ("TEXT", Some("YY-mm-dd HH:MM:SS")) => {
                 let Ok(temp) = NaiveDateTime::parse_from_str(subdata, "%Y%m%d%H%M") else {
                     log::error!("Invalid data!");
                     return None;
                 };
                 buf.push(temp.format("'%Y-%m-%d %H:%M:%S'").to_string());
             }
-            "NaiveTime" => {
+            ("TEXT", Some("HH:MM:SS")) => {
                 let Ok(temp) = NaiveTime::parse_from_str(subdata, "%H%M") else {
                     log::error!("Invalid data!");
                     return None;
                 };
                 buf.push(temp.format("'%H:%M:%S'").to_string());
             }
-            "String" => buf.push(format!("'{}'", subdata)),
+            ("TEXT", _) => buf.push(format!("'{}'", subdata)),
             _ => buf.push(subdata.to_string()),
         }
     }

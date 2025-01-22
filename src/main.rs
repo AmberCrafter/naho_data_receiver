@@ -1,7 +1,7 @@
 mod component;
 mod config;
 
-use component::{reader_serial_port::setup_serial_port_cwb, receiver_raw::setup_rawdata_recorder, receiver_sqlite::setup_sqlite3_recorder};
+use component::{reader_serial_port::{setup_serial_port_cwb, setup_serial_port_cwb_by_line}, receiver_raw::setup_rawdata_recorder, receiver_sqlite::setup_sqlite3_recorder};
 use config::SystemConfig;
 use std::{process::exit, sync::mpsc};
 
@@ -15,7 +15,7 @@ fn main() {
     let (rc_raw_tx, rc_raw_rx) = mpsc::channel();
     let (rc_sqlite_tx, rc_sqlite_rx) = mpsc::channel();
 
-    let Ok(_uart_handler) = setup_serial_port_cwb(
+    let Ok(_uart_handler) = setup_serial_port_cwb_by_line(
         &config.global.serial_port.path,
         config.global.serial_port.baudrate,
         uart_tx,

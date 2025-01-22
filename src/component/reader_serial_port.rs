@@ -39,6 +39,57 @@ pub fn setup_serial_port(
     Ok(handle)
 }
 
+pub fn setup_serial_port_cwb_by_line(
+    path: &str,
+    baudrate: u32,
+    sender: Sender<String>
+) -> Result<JoinHandle<usize>, Box<dyn Error + 'static>> {
+    let uart = serialport::new(path, baudrate)
+        .timeout(Duration::from_millis(100))
+        .open()
+        .expect("Open serial port failed");
+
+    let handle = thread::spawn(move || {
+        let mut buffer = String::new();
+        let mut reader = BufReader::new(uart);
+
+        loop {
+            buffer.clear();
+            match reader.read_line(&mut buffer) {
+                Ok(num) => {
+                    log::info!(target: "serialport", "[{}] {:?}", num, buffer);
+                    log::info!(target: "console", "[{}] {:?}", num, buffer);
+                    let Some(etx_idx) = buffer.find('\u{3}')
+                    else { 
+                        log::warn!("Invalid data: {buffer:?}");
+                        continue;
+                    };
+                    let (msg, checksum) = buffer.split_at_mut(etx_idx+1);
+                    
+                    if let Some(_stx_idx) = checksum.find('\u{2}') {
+                        log::error!("Invalid data: {buffer:?}");
+                        continue;
+                    }
+                    
+                    if let Err(e) = sender.send(msg.to_string()) {
+                        log::error!("{e}");
+                    }
+
+                },
+                Err(ref e) if e.kind() == io::ErrorKind::TimedOut => (),
+                Err(e) => log::error!("{e}"),
+            };
+            // println!("sleep...");
+            // sleep(Duration::from_millis(50));
+        }
+        
+        0
+    });
+
+    Ok(handle)
+}
+
+
 pub fn setup_serial_port_cwb(
     path: &str,
     baudrate: u32,
@@ -56,6 +107,7 @@ pub fn setup_serial_port_cwb(
         loop {
             buffer.clear();
             match reader.read_until(0x3, &mut buffer) {
+            // match reader.read_until(0x10, &mut buffer) {
                 Ok(num) => {
                     log::info!(target: "serialport", "[{}] {:?}", num, buffer);
                     let Some(stx_idx) = buffer.iter().position(|&ele| ele==0x2)
@@ -67,6 +119,7 @@ pub fn setup_serial_port_cwb(
 
                     let msg = String::from_utf8_lossy(rawmsg).to_string();
                     log::info!(target: "console", "[{}] {:?}", num, msg);
+                    log::info!(target: "serialport", "[{}] {:?}", num, msg);
                     if let Err(e) = sender.send(msg) {
                         log::error!("{e}");
                     }
