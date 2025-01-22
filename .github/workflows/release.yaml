@@ -22,8 +22,8 @@ jobs:
             args: ''
           - platform: 'ubuntu-24.04'
             args: ''
-          # - platform: 'windows-latest'
-          #   args: ''
+          - platform: 'windows-latest'
+            args: ''
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -56,18 +56,35 @@ jobs:
       - name: Build
         run: cargo build --release
 
-      - name: pack
+      - name: linux pack
+        if: ${{ matrix.platform == 'ubuntu-20.04' || matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-24.04' }} # This must match the platform value defined above.
         run: |
           mkdir naho_data_receiver
           cp target/release/naho_data_receiver naho_data_receiver
           cp -r config naho_data_receiver
           tar -cvf naho_data_receiver.tar naho_data_receiver
 
-      - name: Upload arifact
+      - name: Upload linux arifact
+        if: ${{ matrix.platform == 'ubuntu-20.04' || matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-24.04' }} # This must match the platform value defined above.
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform }}-naho_data_receiver
           path: naho_data_receiver.tar
+
+      - name: windows pack
+        if: ${{ matrix.platform == 'windows-latest' }} # This must match the platform value defined above.
+        run: |
+          mkdir naho_data_receiver
+          cp target/release/naho_data_receiver.exe naho_data_receiver
+          cp -r config naho_data_receiver
+          7z a naho_data_receiver.zip naho_data_receiver
+
+      - name: Upload windows arifact
+        if: ${{ matrix.platform == 'windows-latest' }} # This must match the platform value defined above.
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-naho_data_receiver
+          path: naho_data_receiver.zip
 
       # - name: Rust cache
       #   uses: swatinem/rust-cache@v2
@@ -104,8 +121,8 @@ jobs:
             args: ''
           - platform: 'ubuntu-24.04'
             args: ''
-          # - platform: 'windows-latest'
-          #   args: ''
+          - platform: 'windows-latest'
+            args: ''
 
     runs-on: ubuntu-latest
     needs: build
@@ -133,7 +150,8 @@ jobs:
       #     draft: false
       #     prerelease: false
 
-      - name: Upload artifact
+      - name: Upload linux artifact
+        if: ${{ matrix.platform == 'ubuntu-20.04' || matrix.platform == 'ubuntu-22.04' || matrix.platform == 'ubuntu-24.04' }} # This must match the platform value defined above.
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -142,5 +160,17 @@ jobs:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: artifacts/${{ matrix.platform }}/naho_data_receiver.tar
           asset_name: naho_data_receiver-linux-x86_64-${{ matrix.platform }}.tar
+          asset_content_type: application/octet-stream
+
+      - name: Upload windows aritact
+        if: ${{ matrix.platform == 'windows-latest' }} # This must match the platform value defined above.
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # upload_url: ${{ steps.create_release.outputs.upload_url }}
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: artifacts/${{ matrix.platform }}/naho_data_receiver.zip
+          asset_name: naho_data_receiver-x86_64-${{ matrix.platform }}.zip
           asset_content_type: application/octet-stream
 
