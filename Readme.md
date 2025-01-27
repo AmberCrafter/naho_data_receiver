@@ -40,3 +40,10 @@
 
 # TODO
 1. Rework receiver register method
+
+# ubuntu build dependence
+```
+apt install build-essential
+sudo apt install -y pkg-config libusb-1.0-0-dev libftdi1-dev
+sudo apt-get install -y  libudev-dev
+```
