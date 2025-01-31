@@ -3,8 +3,17 @@ use std::{error::Error, fs::File, io::BufReader, str::Split};
 use chrono::{NaiveDateTime, NaiveTime};
 use serde::Deserialize;
 
-type INTEGER = i64;
-type FLOAT = f64;
+use super::{codec::{CodecConfig, CodecConfigBase, CodecConfigMetadata}, FLOAT, INTEGER};
+
+pub fn get_dkind(data: &str) -> Option<String> {
+    let mut words = data.split(',');
+    match words.nth(2) {
+        Some(val) if val=="MN" || val=="HR" || val=="HH" || val=="DY" || val=="DD" || val=="SM" || val=="SH" || val=="SD" => {
+            Some(val.to_string())
+        } 
+        _ => None
+    }
+}
 
 fn parse_string(spliter: &mut Split<char>) -> Result<String, Box<dyn Error + 'static>> {
     if let Some(val) = spliter.next() {
@@ -479,7 +488,7 @@ pub struct CWBDayData {
 impl CWBDayData {
     pub fn parse_from_str(data: &str) -> Result<Self, Box<dyn Error + 'static>> {
         let mut words = data.split(',');
-        if words.nth(2) != Some("HR") && words.nth(2) != Some("HH") {
+        if words.nth(2) != Some("DY") && words.nth(2) != Some("DD") {
             return Err(String::from("Invalid").into());
         }
 
@@ -966,66 +975,29 @@ impl CWBSoilDayData {
 }
 
 
-#[derive(Debug, Deserialize)]
-pub struct CWBDataTypeSpec {
-    pub name: String,
-    pub description: String,
-    pub dtype: String,
-    pub unit: Option<String>,
-    pub float_number: Option<INTEGER>
-}
+pub type CWBCodecConfig = CodecConfigBase;
 
 #[derive(Debug, Deserialize)]
-pub struct CWBDataTypeRust {
-    pub name: String,
-    pub dtype: String,
-    pub unit: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CWBDataTypeSqlite3 {
-    pub name: String,
-    pub dtype: String,
-    pub unit: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CWBDataType {
-    pub spec: CWBDataTypeSpec,
-    pub rust: CWBDataTypeRust,
-    pub sqlite3: CWBDataTypeSqlite3,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CWBDataConfig {
-    pub name: String,
-    pub dkind: Vec<String>,
-    pub raw_save: Option<bool>,
-    pub formation: Vec<CWBDataType>
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CWBCodecConfig {
-    pub codec: Vec<CWBDataConfig>
+struct CWBCodecConfigInner {
+    cwb: CodecConfigBase
 }
 
 impl CWBCodecConfig {
     pub fn load(path: &str) -> Result<Self, Box<dyn Error + 'static>> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);
-        let config: CWBCodecConfig = serde_json::from_reader(reader)?;
+        let config: CodecConfig<CWBCodecConfigInner> = serde_json::from_reader(reader)?;
 
-        Ok(config)
+        Ok(config.inner.cwb)
     }
 
     pub fn gen_sqlite3_create_table_cmd(&self, dkind: &str, tablename: &str) -> Option<String> {
         let mut find = false;
         
-        
         let mut tableinfo = String::new();
         tableinfo.push_str("id INTEGER PRIMARY KEY AUTOINCREMENT");
         
-        for mem in self.codec.iter() {
+        for mem in self.metadatas.iter() {
             if mem.dkind.iter().find(|&v| v.as_str()==dkind).is_some() {
                 find = true;
                 for formation in mem.formation.iter() {
@@ -1038,6 +1010,7 @@ impl CWBCodecConfig {
                 break;
             }
         }
+        tableinfo.push_str(", flag_uploaded BOOLEAN DEFAULT FALSE");
         
         if find {
             Some(format!("CREATE TABLE IF NOT EXISTS {tablename} ({tableinfo});", tablename = tablename, tableinfo = tableinfo))
@@ -1046,8 +1019,8 @@ impl CWBCodecConfig {
         }
     }
 
-    pub fn get_data_config(&self, dkind: &str) -> Option<&CWBDataConfig> {
-        for mem in self.codec.iter() {
+    pub fn get_data_config(&self, dkind: &str) -> Option<&CodecConfigMetadata> {
+        for mem in self.metadatas.iter() {
             if mem.dkind.iter().find(|&c_dkind| c_dkind.as_str()==dkind).is_some() {
                 return Some(mem)
             }

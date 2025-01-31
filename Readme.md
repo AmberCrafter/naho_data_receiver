@@ -1,27 +1,76 @@
 # Metadata
- - version: dev
+ - version: v0.1.0-dev
 
 # Structure
-1. csv data seperate by date
-2. sqlite data seperate by date
-
+1. csv files seperate by date and data name
+2. sqlite files seperate by date
 
 # config
 ```config.json
 {
     global: {
+        log4rs_cfg: <log4rs config path>,
+        serial_port: {
+            path: <serial port device ident.>,
+            baudrate: <serial port baudrate>
+        },
+        listen_list:[
+            {
+                name: <name>,
+                path: <listen file path>,
+                ftype: <listen file type>, // [file, pipe, ...]
+                tag: <tag>,
+                dkind: <dkind>,
+                header: {
+                    number: <number of file header line>
+                },
+                flags: {
+                    f_move: <move listen file>
+                }
+            }, ...
+        ],
     },
-    data: [ // in-order list
-        {
-            name: String,
-            sqlite_name: String,
-            datatype: {
-                rust: String,
-                sqlite: String,
+    codec: {
+        <tag>: {
+            tag: <tag>,
+            <db_type>: { [rawdata, l1_data, sqlite3]
+                directory: <path>,
+                seperate_by: [optional] <file seperate method>,
+                pattern: [optional] <filename pattern>,
+                regex: [deprecated][optional] <filename pattern, used to figure out last modify file>,
+                suffix: [optional] <file suffix, default: `dat`>
             },
-            regexp: String
-        },...
-    ]
+            metadatas: [
+                {
+                    name: <data name>,
+                    dkind: <data kind>,
+                    raw_save: [optional] <save raw data into sqlite3>,
+                    formation: [
+                        {
+                            spec: { // spec info
+                                name: <name>,
+                                description: <desc>,
+                                dtype: <data type>,
+                                unit: <data unit>,
+                                float_number: [deprecated] <float number>
+                            },
+                            rust: { // rust system info
+                                name: <name>,
+                                dtype: <rust data type>,
+                                unit: <rust data unit or format>,
+                                major_datetime: [optional] <mark as major datetime>,
+                            },
+                            sqlite3: {
+                                name: <name>,
+                                dtype: <sqlite3 data type>,
+                                unit: <sqlite3 data unit or format>
+                            }
+                        }
+                    ]
+                }, ...
+            ]
+        }
+    } 
 }
 
 ```
