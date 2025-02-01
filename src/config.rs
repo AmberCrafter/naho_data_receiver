@@ -1,27 +1,34 @@
-use std::{collections::HashMap, error::Error, fs::File, io::BufReader, str::FromStr};
+use std::{collections::HashMap, error::Error, fs::File, io::BufReader};
 
 use chrono::NaiveDateTime;
 use regex::Regex;
 use serde::Deserialize;
 
-use crate::component::{codec::{CodecConfigBase, CodecConfigMetadata}, DTAETIME_FMT};
+use crate::component::{
+    codec::{CodecConfigBase, CodecConfigMetadata},
+    DTAETIME_FMT,
+};
 
+#[allow(unused)]
 #[derive(Debug, Deserialize)]
 pub struct SerialPortConfig {
     pub path: String,
     pub baudrate: u32,
 }
 
+#[allow(unused)]
 #[derive(Debug, Deserialize, Clone)]
 pub struct ListenConfigFlags {
     pub f_move: Option<bool>,
 }
 
+#[allow(unused)]
 #[derive(Debug, Deserialize, Clone)]
 pub struct ListenConfigHeader {
     pub number: usize,
 }
 
+#[allow(unused)]
 #[derive(Debug, Deserialize, Clone)]
 pub struct ListenConfig {
     pub name: String,
@@ -33,6 +40,7 @@ pub struct ListenConfig {
     pub flags: Option<ListenConfigFlags>,
 }
 
+#[allow(unused)]
 #[derive(Debug, Deserialize)]
 pub struct GlobalConfig {
     pub log4rs_cfg: String,
@@ -40,6 +48,7 @@ pub struct GlobalConfig {
     pub listen_list: Option<Vec<ListenConfig>>,
 }
 
+#[allow(unused)]
 #[derive(Debug, Deserialize)]
 pub struct SystemConfig {
     pub global: GlobalConfig,
@@ -56,11 +65,8 @@ impl SystemConfig {
     }
 }
 
-pub fn placeholder_get_tag<'a>(placeholder: &'a str) -> Option<&'a str>
-{
-    placeholder
-        .strip_prefix("{{")?
-        .strip_suffix("}}")
+pub fn placeholder_get_tag<'a>(placeholder: &'a str) -> Option<&'a str> {
+    placeholder.strip_prefix("{{")?.strip_suffix("}}")
 }
 
 impl CodecConfigMetadata {
@@ -88,7 +94,7 @@ impl CodecConfigMetadata {
                         log::error!("Unsupport: {val}");
                     }
                 },
-                val if val=="DATETIME" => {
+                val if val == "DATETIME" => {
                     if let Some(value) = opts.get("datetime") {
                         if let Ok(datetime) = NaiveDateTime::parse_from_str(&value, DTAETIME_FMT) {
                             let dt = datetime.format("%Y%m%d%H%M%S").to_string();
@@ -99,8 +105,8 @@ impl CodecConfigMetadata {
                     } else {
                         log::error!("Unsupport: {val}");
                     }
-                },
-                val if val=="DATE" => {
+                }
+                val if val == "DATE" => {
                     if let Some(value) = opts.get("datetime") {
                         if let Ok(datetime) = NaiveDateTime::parse_from_str(&value, DTAETIME_FMT) {
                             let dt = datetime.format("%Y%m%d").to_string();
@@ -111,8 +117,8 @@ impl CodecConfigMetadata {
                     } else {
                         log::error!("Unsupport: {val}");
                     }
-                },
-                val if val=="TIME" => {
+                }
+                val if val == "TIME" => {
                     if let Some(value) = opts.get("datetime") {
                         if let Ok(datetime) = NaiveDateTime::parse_from_str(&value, DTAETIME_FMT) {
                             let dt = datetime.format("%H%M%S").to_string();
@@ -123,7 +129,7 @@ impl CodecConfigMetadata {
                     } else {
                         log::error!("Unsupport: {val}");
                     }
-                },
+                }
                 val => {
                     log::error!("Unsupport: {val}");
                 }

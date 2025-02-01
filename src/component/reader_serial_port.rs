@@ -43,6 +43,9 @@ use crate::component::{parser_cwb::get_dkind, MsgPayload};
 //     Ok(handle)
 // }
 
+
+// This function is better than `setup_serial_port_cwb()` which can check crc value
+#[allow(dead_code)]
 pub fn setup_serial_port_cwb_by_line(
     path: &str,
     baudrate: u32,
@@ -99,7 +102,7 @@ pub fn setup_serial_port_cwb_by_line(
 pub fn setup_serial_port_cwb(
     path: &str,
     baudrate: u32,
-    sender: Sender<Arc<MsgPayload>>
+    sender: Sender<Arc<MsgPayload>>,
 ) -> Result<JoinHandle<usize>, Box<dyn Error + 'static>> {
     let uart = serialport::new(path, baudrate)
         .timeout(Duration::from_millis(100))
@@ -113,14 +116,13 @@ pub fn setup_serial_port_cwb(
         loop {
             buffer.clear();
             match reader.read_until(0x3, &mut buffer) {
-            // match reader.read_until(0x10, &mut buffer) {
+                // match reader.read_until(0x10, &mut buffer) {
                 Ok(num) => {
                     log::info!(target: "serialport", "[{}] {:?}", num, buffer);
-                    let Some(stx_idx) = buffer.iter().position(|&ele| ele==0x2)
-                        else {
-                            log::warn!("Invalid data: {buffer:?}");
-                            continue;
-                        };
+                    let Some(stx_idx) = buffer.iter().position(|&ele| ele == 0x2) else {
+                        log::warn!("Invalid data: {buffer:?}");
+                        continue;
+                    };
                     let (_, rawmsg) = buffer.split_at_mut(stx_idx);
 
                     let msg = String::from_utf8_lossy(rawmsg).to_string();
@@ -137,7 +139,7 @@ pub fn setup_serial_port_cwb(
                     if let Err(e) = sender.send(Arc::new(payload)) {
                         log::error!("{e}");
                     }
-                },
+                }
                 Err(ref e) if e.kind() == io::ErrorKind::TimedOut => (),
                 Err(e) => log::error!("{e}"),
             };

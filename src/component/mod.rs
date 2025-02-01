@@ -1,7 +1,13 @@
-use std::{collections::HashMap, error::Error, fs::rename, hash::{DefaultHasher, Hash, Hasher}, path::{Path, PathBuf}, str::FromStr};
+use std::{
+    collections::HashMap,
+    error::Error,
+    fs::rename,
+    hash::{DefaultHasher, Hash, Hasher},
+    path::{Path, PathBuf},
+};
 
 use chrono::NaiveDateTime;
-use codec::{CodecConfigBase, CodecConfigDB, CodecConfigMetadata};
+use codec::{CodecConfigDB, CodecConfigMetadata};
 
 use crate::config::placeholder_get_tag;
 
@@ -57,11 +63,7 @@ where
     s.finish()
 }
 
-fn is_update_header(
-    table: &mut HeaderTable,
-    key: &str,
-    header: &Vec<String>,
-) -> bool {
+fn is_update_header(table: &mut HeaderTable, key: &str, header: &Vec<String>) -> bool {
     let header_hash = cal_hash(&header);
     let key = key.to_string();
 
@@ -80,7 +82,7 @@ fn is_update_header(
 
 pub fn backup_file<P>(filepath: P) -> Result<(), Box<dyn Error + 'static>>
 where
-    P: AsRef<Path>
+    P: AsRef<Path>,
 {
     let filepath = filepath.as_ref().to_owned();
     let directory = filepath.parent().unwrap();
@@ -100,12 +102,7 @@ where
                     log::info!("Rename {:?} to {:?}", filepath, new_filepath);
                 }
                 Err(e) => {
-                    log::error!(
-                        "{}: Rename {:?} to {:?} failed.",
-                        e,
-                        filepath,
-                        new_filepath
-                    );
+                    log::error!("{}: Rename {:?} to {:?} failed.", e, filepath, new_filepath);
                     return Err(Box::new(e));
                 }
             }
@@ -114,7 +111,7 @@ where
 
         id += 1;
 
-        if id>=100 {
+        if id >= 100 {
             log::error!("Backup index overflow.");
             return Err(String::from("Backup index overflow!").into());
         }
@@ -122,8 +119,12 @@ where
     Ok(())
 }
 
-
-pub fn generate_db_filepath(tag: &str, db_config: &CodecConfigDB, data_config: &CodecConfigMetadata, opts: &HashMap<String, String>) -> Option<PathBuf> {
+pub fn generate_db_filepath(
+    tag: &str,
+    db_config: &CodecConfigDB,
+    data_config: &CodecConfigMetadata,
+    opts: &HashMap<String, String>,
+) -> Option<PathBuf> {
     fn gen_default_filename(tag: &str, opts: &HashMap<String, String>) -> String {
         if let Some(datetime) = opts.get("datetime") {
             if let Ok(datetime) = NaiveDateTime::parse_from_str(&datetime, DTAETIME_FMT) {
@@ -136,7 +137,7 @@ pub fn generate_db_filepath(tag: &str, db_config: &CodecConfigDB, data_config: &
         }
         format!("{}", tag)
     }
-    
+
     let mut filepath = PathBuf::from(&db_config.directory);
 
     if let Some(seperate_by) = &db_config.seperate_by {
@@ -145,7 +146,7 @@ pub fn generate_db_filepath(tag: &str, db_config: &CodecConfigDB, data_config: &
                 val if val.starts_with("metadatas.") => {
                     filepath.push(data_config.name.as_str());
                 }
-                _=> {}
+                _ => {}
             }
         } else {
             log::error!("Invalid: {:?}", seperate_by);
@@ -168,15 +169,4 @@ pub fn generate_db_filepath(tag: &str, db_config: &CodecConfigDB, data_config: &
         filepath.push(format!("{}.{}", gen_default_filename(tag, opts), suffix));
     }
     Some(filepath)
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    #[test]
-    fn test_path_join() {
-        let mut path = Path::new("root");
-        path.join("sub");
-        println!("{:?}", path);
-    }
 }

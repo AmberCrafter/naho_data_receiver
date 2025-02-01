@@ -2,7 +2,7 @@ use std::{
     collections::{HashMap, HashSet},
     error::Error,
     fmt::Display,
-    fs::{create_dir_all, rename},
+    fs::create_dir_all,
     path::Path,
     sync::{mpsc::Receiver, Arc},
     thread::{self, JoinHandle},
@@ -13,7 +13,8 @@ use chrono::{NaiveDateTime, NaiveTime};
 use regex::Regex;
 
 use super::{
-    codec::{CodecConfigBase, CodecConfigMetadata}, generate_db_filepath, MsgPayload, DTAETIME_FMT
+    codec::{CodecConfigBase, CodecConfigMetadata},
+    generate_db_filepath, MsgPayload, DTAETIME_FMT,
 };
 
 #[allow(unused)]
@@ -107,7 +108,10 @@ where
     Ok(())
 }
 
-fn parse_rawdata(rawdata: &str, config: &CodecConfigMetadata) -> (Option<String>, Option<NaiveDateTime>) {
+fn parse_rawdata(
+    rawdata: &str,
+    config: &CodecConfigMetadata,
+) -> (Option<String>, Option<NaiveDateTime>) {
     let mut result = (None, None);
     let mut buf = Vec::new();
     let mut words = rawdata.split(',');
@@ -157,15 +161,14 @@ fn parse_rawdata(rawdata: &str, config: &CodecConfigMetadata) -> (Option<String>
     }
 
     // etx
-    if config.stx_etx==Some(true) && words.next() != Some("\u{3}") {
+    if config.stx_etx == Some(true) && words.next() != Some("\u{3}") {
         return result;
     }
     result.0.replace(buf.join(","));
     result
 }
 
-fn check_sqlfile(config: &SystemConfig)
-{
+fn check_sqlfile(config: &SystemConfig) {
     for (key, val) in config.codec.iter() {
         let Some(cfg_sqlite3) = val.sqlite3.as_ref() else {
             log::info!("Unsupport sqlite3 recorder: {:?}", key);
@@ -255,9 +258,13 @@ pub fn setup_sqlite3_recorder(
                     };
 
                     let mut opts = HashMap::new();
-                    opts.insert("datetime".to_string(), time.format(DTAETIME_FMT).to_string());
-                    let filepath = generate_db_filepath(&cfg.tag, cfg_sqlite3, dconfig, &opts).unwrap();
-                   
+                    opts.insert(
+                        "datetime".to_string(),
+                        time.format(DTAETIME_FMT).to_string(),
+                    );
+                    let filepath =
+                        generate_db_filepath(&cfg.tag, cfg_sqlite3, dconfig, &opts).unwrap();
+
                     if let Some(root) = filepath.parent() {
                         if let Err(e) = create_dir_all(&root) {
                             log::error!("System Error. {e}");
@@ -273,15 +280,12 @@ pub fn setup_sqlite3_recorder(
                             }
                         }
                     }
-    
+
                     if let Ok(connection) = sqlite::open(filepath) {
                         let statement = if dconfig.raw_save == Some(true) {
                             format!(
                                 "INSERT into {} ({},rawdata) values ({},'{}');",
-                                &dconfig.name,
-                                columnname,
-                                data_str,
-                                value
+                                &dconfig.name, columnname, data_str, value
                             )
                         } else {
                             format!(
@@ -311,7 +315,6 @@ pub fn setup_sqlite3_recorder(
 mod test {
     use sqlite::State;
 
-    use super::*;
     #[test]
     fn setup_data() {
         let connection = sqlite::open("data/sqlite3/test.sql").unwrap();

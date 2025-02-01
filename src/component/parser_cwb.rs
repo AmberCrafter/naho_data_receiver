@@ -1,17 +1,31 @@
+#![allow(unused)]
+
 use std::{error::Error, fs::File, io::BufReader, str::Split};
 
 use chrono::{NaiveDateTime, NaiveTime};
 use serde::Deserialize;
 
-use super::{codec::{CodecConfig, CodecConfigBase, CodecConfigMetadata}, FLOAT, INTEGER};
+use super::{
+    codec::{CodecConfig, CodecConfigBase, CodecConfigMetadata},
+    FLOAT, INTEGER,
+};
 
 pub fn get_dkind(data: &str) -> Option<String> {
     let mut words = data.split(',');
     match words.nth(2) {
-        Some(val) if val=="MN" || val=="HR" || val=="HH" || val=="DY" || val=="DD" || val=="SM" || val=="SH" || val=="SD" => {
+        Some(val)
+            if val == "MN"
+                || val == "HR"
+                || val == "HH"
+                || val == "DY"
+                || val == "DD"
+                || val == "SM"
+                || val == "SH"
+                || val == "SD" =>
+        {
             Some(val.to_string())
-        } 
-        _ => None
+        }
+        _ => None,
     }
 }
 
@@ -974,12 +988,11 @@ impl CWBSoilDayData {
     }
 }
 
-
 pub type CWBCodecConfig = CodecConfigBase;
 
 #[derive(Debug, Deserialize)]
 struct CWBCodecConfigInner {
-    cwb: CodecConfigBase
+    cwb: CodecConfigBase,
 }
 
 impl CWBCodecConfig {
@@ -993,17 +1006,21 @@ impl CWBCodecConfig {
 
     pub fn gen_sqlite3_create_table_cmd(&self, dkind: &str, tablename: &str) -> Option<String> {
         let mut find = false;
-        
+
         let mut tableinfo = String::new();
         tableinfo.push_str("id INTEGER PRIMARY KEY AUTOINCREMENT");
-        
+
         for mem in self.metadatas.iter() {
-            if mem.dkind.iter().find(|&v| v.as_str()==dkind).is_some() {
+            if mem.dkind.iter().find(|&v| v.as_str() == dkind).is_some() {
                 find = true;
                 for formation in mem.formation.iter() {
-                    tableinfo.push_str(&format!(", {name} {dtype}", name = formation.sqlite3.name, dtype = formation.sqlite3.dtype));
+                    tableinfo.push_str(&format!(
+                        ", {name} {dtype}",
+                        name = formation.sqlite3.name,
+                        dtype = formation.sqlite3.dtype
+                    ));
                 }
-                
+
                 if Some(true) == mem.raw_save {
                     tableinfo.push_str(", rawdata TEXT");
                 }
@@ -1011,9 +1028,13 @@ impl CWBCodecConfig {
             }
         }
         tableinfo.push_str(", flag_uploaded BOOLEAN DEFAULT FALSE");
-        
+
         if find {
-            Some(format!("CREATE TABLE IF NOT EXISTS {tablename} ({tableinfo});", tablename = tablename, tableinfo = tableinfo))
+            Some(format!(
+                "CREATE TABLE IF NOT EXISTS {tablename} ({tableinfo});",
+                tablename = tablename,
+                tableinfo = tableinfo
+            ))
         } else {
             None
         }
@@ -1021,8 +1042,13 @@ impl CWBCodecConfig {
 
     pub fn get_data_config(&self, dkind: &str) -> Option<&CodecConfigMetadata> {
         for mem in self.metadatas.iter() {
-            if mem.dkind.iter().find(|&c_dkind| c_dkind.as_str()==dkind).is_some() {
-                return Some(mem)
+            if mem
+                .dkind
+                .iter()
+                .find(|&c_dkind| c_dkind.as_str() == dkind)
+                .is_some()
+            {
+                return Some(mem);
             }
         }
         None
@@ -1049,12 +1075,12 @@ mod test {
         let config = CWBCodecConfig::load(path).unwrap();
         println!("{:?}", config);
     }
-    
+
     #[test]
     fn test_gen_sqlite_create_table_cmd() {
         let path = "config.json.ignore";
         let config = CWBCodecConfig::load(path).unwrap();
-        
+
         let query = config.gen_sqlite3_create_table_cmd("MN", "hello");
         println!("{query:?}");
     }

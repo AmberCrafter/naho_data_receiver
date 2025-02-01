@@ -1,25 +1,40 @@
 use std::{
-    collections::HashMap, error::Error, fs::{create_dir_all, File}, io::Write, path::Path, sync::{mpsc::Receiver, Arc}, thread::{self, JoinHandle}
+    collections::HashMap,
+    error::Error,
+    fs::{create_dir_all, File},
+    io::Write,
+    path::Path,
+    sync::{mpsc::Receiver, Arc},
+    thread::{self, JoinHandle},
 };
 
 use chrono::NaiveDateTime;
 
-use crate::{component::{backup_file, HeaderTableValue}, config::SystemConfig};
+use crate::{
+    component::{backup_file, HeaderTableValue},
+    config::SystemConfig,
+};
 
 use super::{cal_hash, generate_db_filepath, HeaderTable, MsgPayload, DTAETIME_FMT};
 
-fn gen_headertable_key(msg: &MsgPayload) -> String
-{
+fn gen_headertable_key(msg: &MsgPayload) -> String {
     format!("{}_{}", msg.tag, msg.dkind)
 }
 
-fn create_file_with_header<P>(path: P, msg: &MsgPayload, table: &mut HeaderTable) -> Result<(), Box<dyn Error + 'static>>
+fn create_file_with_header<P>(
+    path: P,
+    msg: &MsgPayload,
+    table: &mut HeaderTable,
+) -> Result<(), Box<dyn Error + 'static>>
 where
-    P: AsRef<Path>
+    P: AsRef<Path>,
 {
-    fn _create_file_with_header<P>(path: P, header: &Vec<String>) -> Result<(), Box<dyn Error + 'static>>
+    fn _create_file_with_header<P>(
+        path: P,
+        header: &Vec<String>,
+    ) -> Result<(), Box<dyn Error + 'static>>
     where
-        P: AsRef<Path>
+        P: AsRef<Path>,
     {
         if let Some(root) = path.as_ref().parent() {
             create_dir_all(&root)?;
@@ -31,7 +46,7 @@ where
         }
         Ok(())
     }
-    
+
     match (msg.tag.as_str(), msg.dkind.as_str()) {
         ("NAHO", _dkind) => {
             let key = gen_headertable_key(msg);
@@ -49,13 +64,12 @@ where
         }
         _ => {
             if !path.as_ref().exists() {
-                _create_file_with_header(path,&Vec::new())?;
+                _create_file_with_header(path, &Vec::new())?;
             }
         }
     }
     Ok(())
 }
-
 
 pub fn setup_rawdata_recorder(
     receiver: Receiver<Arc<MsgPayload>>,
@@ -77,7 +91,8 @@ pub fn setup_rawdata_recorder(
                     let new_hash = cal_hash(&msg.value);
 
                     let key = gen_headertable_key(&msg);
-                    header_table.entry(key)
+                    header_table
+                        .entry(key)
                         .and_modify(|tval| {
                             if tval.hash != new_hash {
                                 tval.header = msg.value.clone();
@@ -88,7 +103,7 @@ pub fn setup_rawdata_recorder(
                         .or_insert(HeaderTableValue {
                             hash: new_hash,
                             header: msg.value.clone(),
-                            is_update: true
+                            is_update: true,
                         });
 
                     continue;
@@ -119,11 +134,10 @@ pub fn setup_rawdata_recorder(
                     continue;
                 };
 
-
                 for value in msg.value.iter() {
                     let mut words = value.split(',');
-    
-                    let offset = if dconfig.stx_etx==Some(true) {
+
+                    let offset = if dconfig.stx_etx == Some(true) {
                         datetime_info.0 + 1
                     } else {
                         datetime_info.0
@@ -132,7 +146,7 @@ pub fn setup_rawdata_recorder(
                         log::error!("Invalid: {value:?}");
                         continue;
                     };
-    
+
                     let Some(timefmt) = &datetime_info.1.rust.unit else {
                         log::error!(
                             "Unsupport data format. tag:{:?}; dkind:{:?}",
@@ -141,24 +155,25 @@ pub fn setup_rawdata_recorder(
                         );
                         continue;
                     };
-    
+
                     let Ok(time) = NaiveDateTime::parse_from_str(timestr, &timefmt) else {
                         log::error!("Invalid: {value:?}");
                         continue;
                     };
-    
+
                     let mut opts = HashMap::new();
-                    opts.insert("datetime".to_string(), time.format(DTAETIME_FMT).to_string());
-                    let filepath = generate_db_filepath(&cfg.tag, cfg_rawdata, dconfig, &opts).unwrap();
-                    
+                    opts.insert(
+                        "datetime".to_string(),
+                        time.format(DTAETIME_FMT).to_string(),
+                    );
+                    let filepath =
+                        generate_db_filepath(&cfg.tag, cfg_rawdata, dconfig, &opts).unwrap();
+
                     if let Err(e) = create_file_with_header(&filepath, &msg, &mut header_table) {
                         log::error!("System Error. {e}");
                     }
-                    
-                    let mut file = match File::options()
-                        .append(true)
-                        .open(&filepath) 
-                    {
+
+                    let mut file = match File::options().append(true).open(&filepath) {
                         Ok(file) => file,
                         Err(e) => {
                             log::error!("System Error. {e}");
@@ -166,7 +181,7 @@ pub fn setup_rawdata_recorder(
                         }
                     };
 
-                    if let Err(e) = file.write(format!("{}\n", value.trim()).as_bytes()){
+                    if let Err(e) = file.write(format!("{}\n", value.trim()).as_bytes()) {
                         log::error!("System Error. {e}");
                     }
                 }
