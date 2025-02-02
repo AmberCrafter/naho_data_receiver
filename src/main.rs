@@ -17,29 +17,50 @@ fn main() {
 
     log::info!(target: "configuation", "{config:?}");
 
+    // (name, handler)
+    let mut handlers = Vec::new();
+
     let (uart_tx, uart_rx) = mpsc::channel();
     let (rc_raw_tx, rc_raw_rx) = mpsc::channel();
     let (rc_sqlite_tx, rc_sqlite_rx) = mpsc::channel();
 
-    let Ok(_uart_handler) = setup_serial_port_cwb(
-        // let Ok(_uart_handler) = setup_serial_port_cwb_by_line(
+    // let Ok(_uart_handler) = setup_serial_port_cwb_by_line(
+    if let Ok(handler) = setup_serial_port_cwb(
         &config.global.serial_port.path,
         config.global.serial_port.baudrate,
         uart_tx.clone(),
-    ) else {
+    ) {
+        log::info!("Setup serial port success.");
+        log::info!(target: "info", "Setup serial port success.");
+        handlers.push(("serialport", handler));
+    } else {
         log::error!("Setup serial port failed.");
         exit(exitcode::UNAVAILABLE);
     };
 
-    let _loggernet_handler = setup_file_listen_naho(config.clone(), uart_tx.clone());
+    if let Ok(handler) = setup_file_listen_naho(config.clone(), uart_tx.clone()) {
+        log::info!("Setup loggernet listener success.");
+        log::info!(target: "info", "Setup loggernet listener success.");
+        handlers.push(("loggernet", handler));
+    } else {
+        log::error!("Setup loggernet listener failed.");
+    }
 
-    let Ok(_rc_raw_handler) = setup_rawdata_recorder(rc_raw_rx, config.clone()) else {
-        log::error!("Setup raw data recorder failed.");
+    if let Ok(handler) = setup_rawdata_recorder(rc_raw_rx, config.clone()) {
+        log::info!("Setup rawdata recorder success.");
+        log::info!(target: "info", "Setup rawdata recorder success.");
+        handlers.push(("rawdata", handler));
+    } else {
+        log::error!("Setup rawdata recorder failed.");
         exit(exitcode::UNAVAILABLE);
     };
 
-    let Ok(_rc_sqlite_handler) = setup_sqlite3_recorder(rc_sqlite_rx, config.clone()) else {
-        log::error!("Setup raw sqlite3 recorder failed.");
+    if let Ok(handler) = setup_sqlite3_recorder(rc_sqlite_rx, config.clone()) {
+        log::info!("Setup sqlite3 recorder success.");
+        log::info!(target: "info", "Setup sqlite3 recorder success.");
+        handlers.push(("sqlite3", handler));
+    } else {
+        log::error!("Setup sqlite3 recorder failed.");
         exit(exitcode::UNAVAILABLE);
     };
 
