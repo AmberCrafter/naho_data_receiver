@@ -45,6 +45,7 @@ pub struct ListenConfig {
 pub struct GlobalConfig {
     pub log4rs_cfg: String,
     pub serial_port: SerialPortConfig,
+    pub listen_move_suffix: Option<String>,
     pub listen_list: Option<Vec<ListenConfig>>,
 }
 
