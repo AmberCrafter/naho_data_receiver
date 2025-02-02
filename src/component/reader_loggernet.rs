@@ -1,6 +1,6 @@
 use std::{
     error::Error,
-    fs::{create_dir_all, remove_file, rename, File},
+    fs::{remove_file, rename, File},
     io::{BufRead, BufReader},
     path::Path,
     sync::{mpsc::Sender, Arc},
@@ -70,6 +70,9 @@ pub fn setup_file_listen_naho(
                             log::error!("System Error: {e}");
                             continue;
                         }
+                    }
+                    
+                    if flags.f_remove_after_used==Some(true) {
                         do_remove_file = true;
                     }
                 }
