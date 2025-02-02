@@ -20,6 +20,7 @@ pub struct SerialPortConfig {
 #[derive(Debug, Deserialize, Clone)]
 pub struct ListenConfigFlags {
     pub f_move: Option<bool>,
+    pub f_remove_after_used: Option<bool>,
 }
 
 #[allow(unused)]
