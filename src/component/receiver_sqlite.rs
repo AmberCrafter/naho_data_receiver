@@ -8,13 +8,12 @@ use std::{
     thread::{self, JoinHandle},
 };
 
-use crate::{component::backup_file, config::SystemConfig};
+use crate::{component::{backup_file, is_update_header, receiver_raw::gen_headertable_key}, config::SystemConfig};
 use chrono::{NaiveDateTime, NaiveTime};
 use regex::Regex;
 
 use super::{
-    codec::{CodecConfigBase, CodecConfigMetadata},
-    generate_db_filepath, MsgPayload, DTAETIME_FMT,
+    codec::{CodecConfigBase, CodecConfigMetadata}, generate_db_filepath, HeaderTable, MsgPayload, DTAETIME_FMT
 };
 
 #[allow(unused)]
@@ -77,6 +76,13 @@ where
         }
     }
 
+    let mut tableinfo = String::new();
+    tableinfo.push_str("id INTEGER PRIMARY KEY AUTOINCREMENT");
+    tableinfo.push_str(", tablename TEXT");
+    tableinfo.push_str(", header TEXT");
+
+    let statement = format!("CREATE TABLE IF NOT EXISTS headers ({tableinfo});");
+    connection.execute(statement)?;
     Ok(())
 }
 
@@ -217,14 +223,17 @@ pub fn setup_sqlite3_recorder(
     }
 
     let handler = thread::spawn(move || {
+        let mut header_table = HeaderTable::new();
         check_sqlfile(&config);
 
         loop {
             while let Ok(msg) = receiver.recv() {
                 // for header msg
                 if msg.update_header {
-                    // only check config file and try to regenerate db if needed
-                    check_sqlfile(&config);
+                    let key = gen_headertable_key(&msg);
+                    if is_update_header(&mut header_table, &key, &msg.value) {
+                        check_sqlfile(&config);
+                    }
                     continue;
                 }
 

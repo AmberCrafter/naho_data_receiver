@@ -17,7 +17,7 @@ use crate::{
 
 use super::{cal_hash, generate_db_filepath, HeaderTable, MsgPayload, DTAETIME_FMT};
 
-fn gen_headertable_key(msg: &MsgPayload) -> String {
+pub fn gen_headertable_key(msg: &MsgPayload) -> String {
     format!("{}_{}", msg.tag, msg.dkind)
 }
 

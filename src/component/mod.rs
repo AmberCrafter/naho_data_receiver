@@ -13,6 +13,7 @@ use crate::config::placeholder_get_tag;
 
 pub mod codec;
 pub mod parser_cwb;
+pub mod qc_level1;
 pub mod reader_loggernet;
 pub mod reader_serial_port;
 pub mod receiver_raw;
@@ -63,7 +64,7 @@ where
     s.finish()
 }
 
-fn is_update_header(table: &mut HeaderTable, key: &str, header: &Vec<String>) -> bool {
+pub fn is_update_header(table: &mut HeaderTable, key: &str, header: &Vec<String>) -> bool {
     let header_hash = cal_hash(&header);
     let key = key.to_string();
 
@@ -76,7 +77,18 @@ fn is_update_header(table: &mut HeaderTable, key: &str, header: &Vec<String>) ->
     }
 
     // update table
-    table.entry(key).and_modify(|v| v.hash = header_hash);
+    table
+        .entry(key.clone())
+        .and_modify(|v| {
+            v.hash = header_hash;
+            v.header = header.clone();
+            v.is_update = true;
+        })
+        .or_insert(HeaderTableValue {
+            hash: header_hash,
+            header: header.clone(),
+            is_update: true,
+        });
     true
 }
 

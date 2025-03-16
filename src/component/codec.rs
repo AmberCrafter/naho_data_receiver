@@ -92,4 +92,61 @@ impl CodecConfigMetadata {
         }
         None
     }
+
+    pub fn convert_data_name(&self, from: &str, name: &str, to: &str) -> Option<&str> {
+        match (from, to) {
+            ("rust", "spec") => Some(
+                &self
+                    .formation
+                    .iter()
+                    .find(|&ele| ele.rust.name == name)?
+                    .spec
+                    .name,
+            ),
+            ("sqlite", "spec") | ("sqlite3", "spec") => Some(
+                &self
+                    .formation
+                    .iter()
+                    .find(|&ele| ele.sqlite3.name == name)?
+                    .spec
+                    .name,
+            ),
+            ("spec", "rust") => Some(
+                &self
+                    .formation
+                    .iter()
+                    .find(|&ele| ele.spec.name == name)?
+                    .rust
+                    .name,
+            ),
+            ("sqlite", "rust") | ("sqlite3", "rust")=> Some(
+                &self
+                    .formation
+                    .iter()
+                    .find(|&ele| ele.sqlite3.name == name)?
+                    .rust
+                    .name,
+            ),
+            ("spec", "sqlite") | ("spec", "sqlite3")=> Some(
+                &self
+                    .formation
+                    .iter()
+                    .find(|&ele| ele.spec.name == name)?
+                    .sqlite3
+                    .name,
+            ),
+            ("rust", "sqlite") | ("rust", "sqlite3")=> Some(
+                &self
+                    .formation
+                    .iter()
+                    .find(|&ele| ele.rust.name == name)?
+                    .sqlite3
+                    .name,
+            ),
+            others => {
+                log::error!("Unsupport: {others:?}");
+                None
+            }
+        }
+    }
 }
