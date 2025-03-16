@@ -8,12 +8,17 @@ use std::{
     thread::{self, JoinHandle},
 };
 
-use crate::{component::{backup_file, is_update_header, receiver_raw::gen_headertable_key}, config::SystemConfig};
+use crate::{
+    component::{receiver_raw::gen_headertable_key, utils::files::backup_file},
+    config::SystemConfig,
+};
 use chrono::{NaiveDateTime, NaiveTime};
 use regex::Regex;
 
 use super::{
-    codec::{CodecConfigBase, CodecConfigMetadata}, generate_db_filepath, HeaderTable, MsgPayload, DTAETIME_FMT
+    codec::{CodecConfigBase, CodecConfigMetadata},
+    utils::files::{generate_db_filepath, is_update_header},
+    HeaderTable, MsgPayload, DTAETIME_FMT,
 };
 
 #[allow(unused)]

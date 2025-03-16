@@ -43,7 +43,6 @@ use crate::component::{parser_cwb::get_dkind, MsgPayload};
 //     Ok(handle)
 // }
 
-
 // This function is better than `setup_serial_port_cwb()` which can check crc value
 #[allow(dead_code)]
 pub fn setup_serial_port_cwb_by_line(

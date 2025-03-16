@@ -83,6 +83,7 @@ pub struct CodecConfigBase {
     pub metadatas: Vec<CodecConfigMetadata>,
 }
 
+#[allow(unused)]
 impl CodecConfigMetadata {
     pub fn get_datetime_info(&self) -> Option<(usize, CodecConfigDataType)> {
         for (idx, val) in self.formation.iter().enumerate() {
@@ -119,7 +120,7 @@ impl CodecConfigMetadata {
                     .rust
                     .name,
             ),
-            ("sqlite", "rust") | ("sqlite3", "rust")=> Some(
+            ("sqlite", "rust") | ("sqlite3", "rust") => Some(
                 &self
                     .formation
                     .iter()
@@ -127,7 +128,7 @@ impl CodecConfigMetadata {
                     .rust
                     .name,
             ),
-            ("spec", "sqlite") | ("spec", "sqlite3")=> Some(
+            ("spec", "sqlite") | ("spec", "sqlite3") => Some(
                 &self
                     .formation
                     .iter()
@@ -135,7 +136,7 @@ impl CodecConfigMetadata {
                     .sqlite3
                     .name,
             ),
-            ("rust", "sqlite") | ("rust", "sqlite3")=> Some(
+            ("rust", "sqlite") | ("rust", "sqlite3") => Some(
                 &self
                     .formation
                     .iter()

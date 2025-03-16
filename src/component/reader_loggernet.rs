@@ -8,9 +8,9 @@ use std::{
     time::Duration,
 };
 
-use crate::config::SystemConfig;
+use crate::{component::utils::files::is_update_header, config::SystemConfig};
 
-use super::{is_update_header, HeaderTable, MsgPayload};
+use super::{HeaderTable, MsgPayload};
 
 pub fn setup_file_listen_naho(
     config: Arc<SystemConfig>,
@@ -71,8 +71,8 @@ pub fn setup_file_listen_naho(
                             continue;
                         }
                     }
-                    
-                    if flags.f_remove_after_used==Some(true) {
+
+                    if flags.f_remove_after_used == Some(true) {
                         do_remove_file = true;
                     }
                 }

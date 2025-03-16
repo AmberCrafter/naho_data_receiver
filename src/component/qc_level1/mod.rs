@@ -1,3 +1,4 @@
+#![allow(unused)]
 mod filter;
 
 use std::{error::Error, path::Path};
@@ -36,8 +37,6 @@ where
     conn.iterate(query, callback)?;
     Ok(())
 }
-
-
 
 #[cfg(test)]
 mod test {

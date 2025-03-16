@@ -68,7 +68,7 @@ impl Filter {
         P: AsRef<Path>,
     {
         self.load_flag_table(path)?;
-        
+
         for cfg in self.flags.iter() {
             let Some(level_cfg) = cfg.1.as_object() else {
                 continue;
@@ -83,7 +83,7 @@ impl Filter {
             let file = File::open(src)?;
             let mut reader = BufReader::new(file);
             let mut buffer = String::new();
-    
+
             // find header
             while let Ok(_nums) = reader.read_line(&mut buffer) {
                 if buffer.find(FILTER_HEADER_ST).is_some()
@@ -96,9 +96,11 @@ impl Filter {
                 buffer.clear();
             }
             buffer.clear();
-    
+
             while let Ok(num) = reader.read_line(&mut buffer) {
-                if num==0 {break;}
+                if num == 0 {
+                    break;
+                }
                 // println!("{buffer}");
 
                 let mut words = buffer.split(',');
@@ -114,7 +116,7 @@ impl Filter {
                     buffer.clear();
                     continue;
                 };
-    
+
                 let et = if let Some(buf) = words.next() {
                     let Ok(et) = NaiveDateTime::parse_from_str(buf, FILTER_DATETIME_FMT) else {
                         log::error!("System Error: {}", buffer);
@@ -127,16 +129,19 @@ impl Filter {
                     buffer.clear();
                     continue;
                 };
-    
+
                 let Some(buf) = words.next() else {
                     log::error!("System Error: {}", buffer);
                     buffer.clear();
                     continue;
                 };
 
-                let rule = FilterRule { starttime: st, endtime: et, target: buf.to_string() };
-                let entry = self.rules.entry(cfg.0.to_string())
-                    .or_insert(Vec::new());
+                let rule = FilterRule {
+                    starttime: st,
+                    endtime: et,
+                    target: buf.to_string(),
+                };
+                let entry = self.rules.entry(cfg.0.to_string()).or_insert(Vec::new());
                 entry.push(rule);
                 buffer.clear();
             }
@@ -144,7 +149,6 @@ impl Filter {
         Ok(())
     }
 }
-
 
 #[cfg(test)]
 mod test {
