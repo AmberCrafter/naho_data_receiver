@@ -1,4 +1,4 @@
-use std::{collections::HashMap, error::Error};
+use std::error::Error;
 
 pub mod codec;
 pub mod parser_cwb;
@@ -36,11 +36,3 @@ impl MsgPayload {
         Ok(())
     }
 }
-
-#[derive(Debug)]
-pub struct HeaderTableValue {
-    hash: u64,
-    header: Vec<String>,
-    is_update: bool,
-}
-pub type HeaderTable = HashMap<String, HeaderTableValue>;

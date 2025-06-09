@@ -10,7 +10,7 @@ use std::{
 
 use crate::{component::utils::files::is_update_header, config::SystemConfig};
 
-use super::{HeaderTable, MsgPayload};
+use super::{utils::files::HeaderTable, MsgPayload};
 
 pub fn setup_file_listen_naho(
     config: Arc<SystemConfig>,

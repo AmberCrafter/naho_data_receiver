@@ -95,14 +95,14 @@ appenders:
 root:
   level: warn
   appenders:
-    - stdout
+    # - stdout
     - error
 
 loggers:
   console:
     level: info
     appenders:
-      - stdout
+      # - stdout
     additive: false
 
   configuation:

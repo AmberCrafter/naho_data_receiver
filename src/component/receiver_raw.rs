@@ -10,14 +10,11 @@ use std::{
 
 use chrono::NaiveDateTime;
 
-use crate::{
-    component::{utils::files::backup_file, HeaderTableValue},
-    config::SystemConfig,
-};
+use crate::{component::utils::files::backup_file, config::SystemConfig};
 
 use super::{
-    utils::files::{cal_hash, generate_db_filepath},
-    HeaderTable, MsgPayload, DTAETIME_FMT,
+    utils::files::{cal_hash, generate_db_filepath, HeaderTable, HeaderTableValue},
+    MsgPayload, DTAETIME_FMT,
 };
 
 pub fn gen_headertable_key(msg: &MsgPayload) -> String {

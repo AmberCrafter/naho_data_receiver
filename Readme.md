@@ -1,5 +1,9 @@
 # Metadata
- - version: v0.1.0-dev
+ - version: v0.1.1-dev
+
+# ChangeLog
+## v0.1.1-dev
+1. Fix receiver time formation
 
 # Structure
 1. csv files seperate by date and data name
@@ -14,6 +18,7 @@
             path: <serial port device ident.>,
             baudrate: <serial port baudrate>
         },
+        listen_move_suffix: <suffix>,
         listen_list:[
             {
                 name: <name>,
@@ -89,6 +94,7 @@
 
 # TODO
 1. Rework receiver register method
+2. Implement gRPC and state machine for cli
 
 # ubuntu build dependence
 ```

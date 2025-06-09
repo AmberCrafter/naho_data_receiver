@@ -17,8 +17,8 @@ use regex::Regex;
 
 use super::{
     codec::{CodecConfigBase, CodecConfigMetadata},
-    utils::files::{generate_db_filepath, is_update_header},
-    HeaderTable, MsgPayload, DTAETIME_FMT,
+    utils::files::{generate_db_filepath, is_update_header, HeaderTable},
+    MsgPayload, DTAETIME_FMT,
 };
 
 #[allow(unused)]
@@ -138,14 +138,14 @@ fn parse_rawdata(
             return result;
         };
 
-        match (dtype.sqlite3.dtype.as_str(), dtype.sqlite3.unit.as_deref()) {
-            ("TEXT", Some("YYYY-mm-dd HH:MM:SS")) => {
-                let Some(formation) = &dtype.rust.unit else {
+        match (dtype.rust.dtype.as_str(), dtype.rust.unit.as_deref()) {
+            ("text", Some("%Y%m%d%H%M")) => {
+                let Some(formation) = &dtype.sqlite3.unit else {
                     log::error!("Invalid data!");
                     return result;
                 };
 
-                let Ok(temp) = NaiveDateTime::parse_from_str(subdata, formation) else {
+                let Ok(temp) = NaiveDateTime::parse_from_str(subdata, "%Y%m%d%H%M") else {
                     log::error!("Invalid data!");
                     return result;
                 };
@@ -154,19 +154,19 @@ fn parse_rawdata(
                     result.1.replace(temp.clone());
                 }
             }
-            ("TEXT", Some("HH:MM:SS")) => {
-                let Some(formation) = &dtype.rust.unit else {
+            ("text", Some("%H%M")) => {
+                let Some(formation) = &dtype.sqlite3.unit else {
                     log::error!("Invalid data!");
                     return result;
                 };
 
-                let Ok(temp) = NaiveTime::parse_from_str(subdata, formation) else {
+                let Ok(temp) = NaiveTime::parse_from_str(subdata, "%H%M") else {
                     log::error!("Invalid data! {subdata}");
                     return result;
                 };
                 buf.push(temp.format("'%H:%M:%S'").to_string());
             }
-            ("TEXT", _) => buf.push(format!("'{}'", subdata)),
+            ("text", _) => buf.push(format!("'{}'", subdata)),
             _ => buf.push(subdata.to_string()),
         }
     }

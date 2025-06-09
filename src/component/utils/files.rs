@@ -11,10 +11,18 @@ use chrono::NaiveDateTime;
 use crate::{
     component::{
         codec::{CodecConfigDB, CodecConfigMetadata},
-        HeaderTable, HeaderTableValue, DTAETIME_FMT,
+        DTAETIME_FMT,
     },
     config::placeholder_get_tag,
 };
+
+#[derive(Debug)]
+pub struct HeaderTableValue {
+    pub hash: u64,
+    pub header: Vec<String>,
+    pub is_update: bool,
+}
+pub type HeaderTable = HashMap<String, HeaderTableValue>;
 
 pub fn cal_hash<T>(t: T) -> u64
 where

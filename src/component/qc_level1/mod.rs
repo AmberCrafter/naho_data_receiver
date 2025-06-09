@@ -90,9 +90,9 @@ mod test {
     #[test]
     fn case2() {
         let conn = sqlite::open("data/sqlite3/naho/NAHO_20250119.sql").unwrap();
-        let query = "select ori.* from CR1000XSeries_Datatable_Sec ori 
+        let query = "select ori.* from CR1000XSeries_Datatable_Min ori 
             inner join (
-                select max(id) as maxid, timestamp from CR1000XSeries_Datatable_Sec group by timestamp
+                select max(id) as maxid, timestamp from CR1000XSeries_Datatable_Min group by timestamp
             ) group_table 
             ON group_table.maxid = ori.id
             order by ori.timestamp;";
@@ -124,7 +124,7 @@ mod test {
         let path = "data/sqlite3/naho/NAHO_20250119.sql";
         let res = sqlite_dedup_and_sort_by(
             path,
-            "CR1000XSeries_Datatable_Sec",
+            "CR1000XSeries_Datatable_Min",
             "timestamp",
             "timestamp",
             |row| {
